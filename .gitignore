@@ -1,0 +1,16 @@
+# Node / Angular
+**/node_modules/
+**/.angular/
+**/dist/
+
+# .NET / C#
+**/bin/
+**/obj/
+**/.vs/
+**/appsettings.Development.json
+*.user
+
+# Sistema Operativo y Editores
+.DS_Store
+Thumbs.db
+.vscode/
