@@ -33,11 +33,9 @@ namespace ArriendosApi.Migrations
                     b.Property<int>("Anio")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ContratoIdContrato")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("EsPagado")
-                        .HasColumnType("boolean");
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("FechaUltimoPago")
                         .HasColumnType("timestamp with time zone");
@@ -71,7 +69,7 @@ namespace ArriendosApi.Migrations
 
                     b.HasKey("IdCobro");
 
-                    b.HasIndex("ContratoIdContrato");
+                    b.HasIndex("IdContrato");
 
                     b.ToTable("CobroMensual", (string)null);
                 });
@@ -87,8 +85,9 @@ namespace ArriendosApi.Migrations
                     b.Property<int>("DiaPagoMensual")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("EsActivo")
-                        .HasColumnType("boolean");
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("FechaFin")
                         .HasColumnType("timestamp with time zone");
@@ -102,12 +101,6 @@ namespace ArriendosApi.Migrations
                     b.Property<int>("IdInquilino")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("InmuebleIdInmueble")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("InquilinoIdInquilino")
-                        .HasColumnType("integer");
-
                     b.Property<decimal>("MontoArriendo")
                         .HasColumnType("numeric");
 
@@ -116,9 +109,9 @@ namespace ArriendosApi.Migrations
 
                     b.HasKey("IdContrato");
 
-                    b.HasIndex("InmuebleIdInmueble");
+                    b.HasIndex("IdInmueble");
 
-                    b.HasIndex("InquilinoIdInquilino");
+                    b.HasIndex("IdInquilino");
 
                     b.ToTable("Contrato", (string)null);
                 });
@@ -134,6 +127,9 @@ namespace ArriendosApi.Migrations
                     b.Property<string>("Direccion")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("Estado")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -155,8 +151,9 @@ namespace ArriendosApi.Migrations
                     b.Property<int?>("EdificioIdEdificio")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("Estado")
-                        .HasColumnType("boolean");
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int>("IdEdificio")
                         .HasColumnType("integer");
@@ -177,6 +174,8 @@ namespace ArriendosApi.Migrations
 
                     b.HasIndex("EdificioIdEdificio");
 
+                    b.HasIndex("IdEdificio");
+
                     b.ToTable("Inmueble", (string)null);
                 });
 
@@ -190,6 +189,9 @@ namespace ArriendosApi.Migrations
 
                     b.Property<string>("Email")
                         .HasColumnType("text");
+
+                    b.Property<bool>("Estado")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Identificacion")
                         .IsRequired()
@@ -211,7 +213,9 @@ namespace ArriendosApi.Migrations
                 {
                     b.HasOne("ArriendosApi.Entities.Contrato", "Contrato")
                         .WithMany("CobrosMensuales")
-                        .HasForeignKey("ContratoIdContrato");
+                        .HasForeignKey("IdContrato")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Contrato");
                 });
@@ -220,11 +224,15 @@ namespace ArriendosApi.Migrations
                 {
                     b.HasOne("ArriendosApi.Entities.Inmueble", "Inmueble")
                         .WithMany("Contratos")
-                        .HasForeignKey("InmuebleIdInmueble");
+                        .HasForeignKey("IdInmueble")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("ArriendosApi.Entities.Inquilino", "Inquilino")
                         .WithMany("Contratos")
-                        .HasForeignKey("InquilinoIdInquilino");
+                        .HasForeignKey("IdInquilino")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Inmueble");
 
@@ -233,9 +241,15 @@ namespace ArriendosApi.Migrations
 
             modelBuilder.Entity("ArriendosApi.Entities.Inmueble", b =>
                 {
-                    b.HasOne("ArriendosApi.Entities.Edificio", "Edificio")
+                    b.HasOne("ArriendosApi.Entities.Edificio", null)
                         .WithMany("Inmuebles")
                         .HasForeignKey("EdificioIdEdificio");
+
+                    b.HasOne("ArriendosApi.Entities.Edificio", "Edificio")
+                        .WithMany()
+                        .HasForeignKey("IdEdificio")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Edificio");
                 });

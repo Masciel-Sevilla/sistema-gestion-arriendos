@@ -8,7 +8,7 @@
         public string NumeroDepa { get; set; } = string.Empty;
         public string NumeroMedidorLuz { get; set; } 
         public string NumeroMedidorAgua { get; set; } 
-        public bool Estado { get; set; } = false;
+        public string Estado { get; set; }
 
     }
 }

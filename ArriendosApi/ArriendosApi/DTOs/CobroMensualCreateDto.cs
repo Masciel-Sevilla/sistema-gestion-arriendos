@@ -38,6 +38,6 @@ namespace ArriendosApi.DTOs
         public decimal MontoPagado { get; set; }
 
         [Required]
-        public bool EsPagado { get; set; } = false;
+        public string Estado { get; set; } 
     }
 }

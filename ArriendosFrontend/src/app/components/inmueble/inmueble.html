@@ -1,0 +1,138 @@
+<div class="contenedor">
+  <h2>Gestión de Inmuebles</h2>
+
+  @if (errorMensaje()) {
+  <div class="alerta-error">
+    {{ errorMensaje() }}
+  </div>
+  }
+
+  <div class="panel-formulario">
+    <h3>Registrar Nuevo Inmueble</h3>
+    <form [formGroup]="formInmueble" (ngSubmit)="guardar()" class="form-fila">
+      <div class="form-campo form-campo--lg">
+        <label class="form-etiqueta">Edificio (*):</label>
+        <select formControlName="idEdificio" class="form-select">
+          <option value="" disabled>Seleccione un edificio</option>
+          @for (ed of edificios(); track ed) {
+          <option [value]="ed.idEdificio">
+            {{ ed.nombre }}
+          </option>
+          }
+        </select>
+      </div>
+
+      <div class="form-campo form-campo--lg">
+        <label class="form-etiqueta">N° Depa (*):</label>
+        <input type="text" formControlName="numeroDepa" placeholder="Ej: Apt 301" class="form-input" />
+      </div>
+
+      <div class="form-campo form-campo--lg">
+        <label class="form-etiqueta">Medidor Luz:</label>
+        <input type="text" formControlName="numeroMedidorLuz" placeholder="Máx 12 char" class="form-input" />
+      </div>
+
+      <div class="form-campo form-campo--sm">
+        <label class="form-etiqueta">Medidor Agua:</label>
+        <input type="text" formControlName="numeroMedidorAgua" placeholder="Máx 5 char" class="form-input" />
+      </div>
+
+      <div class="form-campo form-campo--md">
+        <label class="form-etiqueta">Estado:</label>
+        <select formControlName="estado" class="form-select">
+          <option value="DISPONIBLE">Disponible</option>
+          <option value="OCUPADO">Ocupado</option>
+          <option value="MANTENIMIENTO">Mantenimiento</option>
+        </select>
+      </div>
+
+      <button type="submit" [disabled]="formInmueble.invalid" class="btn btn-primario">
+        {{ inmuebleEdicionId() !== null ? 'Actualizar' : 'Guardar' }}
+      </button>
+      @if (inmuebleEdicionId() !== null) {
+      <button type="button" (click)="cancelarEdicion()" class="btn btn-primario">
+        Cancelar
+      </button>
+      }
+    </form>
+  </div>
+
+  <div class="barra-filtro">
+    <label class="barra-filtro__etiqueta">Filtrar por estado:</label>
+    <select [ngModel]="filtroEstado()" (ngModelChange)="onFiltroEstadoChange($event)" class="form-select">
+      <option value="">Todos</option>
+      <option value="DISPONIBLE">Disponible</option>
+      <option value="OCUPADO">Ocupado</option>
+      <option value="MANTENIMIENTO">Mantenimiento</option>
+      <option value="INACTIVO">Inactivo</option>
+    </select>
+  </div>
+
+  @if (cargando()) {
+  <div class="estado-carga">Cargando inmuebles...</div>
+  }
+
+  @if (!cargando()) {
+  <div class="tabla-wrapper">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>N° Depa</th>
+          <th>Edificio</th>
+          <th>Medidor Luz</th>
+          <th>Medidor Agua</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (inm of inmuebles(); track inm) {
+        <tr>
+          <td class="tabla__id">#{{ inm.idInmueble }}</td>
+
+          <td>{{ inm.numeroDepa }}</td>
+
+          <td>{{ inm.nombreEdificio || inm.idEdificio }}</td>
+
+          <td>{{ inm.numeroMedidorLuz || '-' }}</td>
+
+          <td>{{ inm.numeroMedidorAgua || '-' }}</td>
+
+          <td>
+            <span [style.background-color]="getEstadoColor(inm.estado).bg"
+              [style.color]="getEstadoColor(inm.estado).text" class="badge-estado">
+
+              {{ getEstadoLabel(inm.estado) }}
+
+            </span>
+          </td>
+
+          <!-- UNA SOLA COLUMNA DE ACCIONES -->
+          <td class="acciones">
+            @if (inm.estado === 'INACTIVO') {
+
+            <button (click)="activarInmueble(inm.idInmueble)" class="btn btn-exito btn--sm">
+              ✅ Activar
+            </button>
+
+            } @else {
+
+            <button (click)="seleccionarEditar(inm)" class="btn btn-secundario btn--sm">
+              Editar
+            </button>
+
+            <button (click)="eliminar(inm.idInmueble)" class="btn btn-peligro btn--sm">
+              Desactivar
+            </button>
+
+            }
+          </td>
+        </tr>
+
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+</div>

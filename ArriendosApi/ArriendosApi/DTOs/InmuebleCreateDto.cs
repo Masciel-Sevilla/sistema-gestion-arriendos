@@ -15,8 +15,8 @@ namespace ArriendosApi.DTOs
         [StringLength(12, ErrorMessage = "El medidor de luz no puede exceder los 12 caracteres.")]
         public string NumeroMedidorLuz { get; set; }
         [StringLength(5, ErrorMessage = "El medidor de luz no puede exceder los 5 caracteres.")]
-        public string NumeroMedidorAgua { get; set; } 
-        public bool Estado { get; set; } = false;
+        public string NumeroMedidorAgua { get; set; }
+        
 
     }
 }

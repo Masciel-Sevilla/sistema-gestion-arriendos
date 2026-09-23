@@ -2,6 +2,7 @@ export interface EdificioReadDto {
   idEdificio: number;
   nombre: string;
   direccion: string;
+  estado: boolean;
 }
 
 export interface EdificioCreateDto {
@@ -16,14 +17,14 @@ export interface InmuebleReadDto {
   numeroDepa: string;
   numeroMedidorLuz?: string;
   numeroMedidorAgua?: string;
-  estado: boolean;
+  estado: string;
 }
 export interface InmuebleCreateDto {
   idEdificio: number;
   numeroDepa: string;
   numeroMedidorLuz?: string;
   numeroMedidorAgua?: string;
-  estado: boolean;
+  estado: string;
 }
 
 export interface InquilinoReadDto {
@@ -32,6 +33,7 @@ export interface InquilinoReadDto {
   identificacion: string;
   email: string;
   telefono: string;
+  estado: boolean;
 }
 
 export interface InquilinoCreateDto {
@@ -54,7 +56,7 @@ export interface ContratoReadDto {
   diaPagoMensual: number;
   fechaInicio: string;
   fechaFin?: string;
-  esActivo: boolean;
+  estado: string;
 }
 
 export interface ContratoCreateDto {
@@ -65,5 +67,39 @@ export interface ContratoCreateDto {
   diaPagoMensual: number;
   fechaInicio: string;
   fechaFin?: string;
-  esActivo: boolean;
+  estado: string;
+}
+export interface CobroMensualReadDto {
+  idCobro: number;
+  idContrato: number;
+  nombreInquilino: string;
+  numeroDepa: string;
+  mes: number;
+  anio: number;
+  valorArriendo: number;
+  valorLuz: number;
+  valorAgua: number;
+  saldoAnterior: number;
+  totalPagar: number;
+  montoPagado: number;
+  saldoPendiente: number;
+  estado: string;
+  fechaUltimoPago: string;
+}
+export interface CobroMensualCreateDto {
+  idContrato: number;
+  mes: number;
+  anio: number;
+  valorArriendo: number;
+  valorLuz: number;
+  valorAgua: number;
+  saldoAnterior: number;
+  totalPagar: number;
+  montoPagado: number;
+  saldoPendiente: number;
+  estado: string;
+  fechaUltimoPago: string;
+}
+export interface CobroPagoDto {
+  montoAbono: number;
 }

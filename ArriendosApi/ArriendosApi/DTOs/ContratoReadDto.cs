@@ -15,6 +15,6 @@
         public int DiaPagoMensual { get; set; }
         public DateTime FechaInicio { get; set; }
         public DateTime? FechaFin { get; set; }
-        public bool EsActivo { get; set; }
+        public string Estado { get; set; }
     }
 }

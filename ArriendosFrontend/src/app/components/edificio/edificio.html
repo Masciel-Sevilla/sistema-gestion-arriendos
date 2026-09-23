@@ -1,0 +1,79 @@
+<div class="contenedor contenedor--angosto">
+  <h2>Gestión de Edificios</h2>
+
+  @if (errorMensaje()) {
+  <div class="alerta-error">
+    {{ errorMensaje() }}
+  </div>
+  }
+
+  <div class="panel-formulario">
+    <h3>Registrar Nuevo Edificio</h3>
+    <form [formGroup]="formEdificio" (ngSubmit)="guardar()" class="form-fila">
+      <div class="form-campo form-campo--md">
+        <label class="form-etiqueta">Nombre:</label>
+        <input type="text" formControlName="nombre" placeholder="Ej: Edificio Central" class="form-input" />
+      </div>
+
+      <div class="form-campo form-campo--lg">
+        <label class="form-etiqueta">Dirección:</label>
+        <input type="text" formControlName="direccion" placeholder="Ej: Av. Amazonas N34-12" class="form-input" />
+      </div>
+
+      <button type="submit" [disabled]="formEdificio.invalid" class="btn btn-primario">
+        {{ edificioEdicionId() !== null ? 'Actualizar' : 'Guardar' }}
+      </button>
+      @if (edificioEdicionId() !== null) {
+      <button type="button" (click)="cancelarEdicion()" class="btn btn-secundario">Cancelar</button>
+      }
+    </form>
+  </div>
+
+  @if (cargando()) {
+  <div class="estado-carga">Cargando edificios...</div>
+  }
+
+  <label class="checkbox-inactivos">
+    <input type="checkbox" [checked]="mostrarInactivos()" (change)="toggleMostrarInactivos()" />
+    Mostrar inactivos
+  </label>
+
+  @if (!cargando()) {
+  <div class="tabla-wrapper">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Dirección</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (ed of edificios(); track ed) {
+        <tr>
+          <td class="tabla__id">#{{ ed.idEdificio }}</td>
+          <td>{{ ed.nombre }}</td>
+          <td>{{ ed.direccion }}</td>
+          <td class="tabla__acciones">
+            @if (ed.estado) {
+            <button (click)="seleccionarEditar(ed)" class="btn btn-secundario btn--sm">Editar</button>
+            <button (click)="eliminar(ed.idEdificio)" class="btn btn-peligro btn--sm">Desactivar</button>
+            } @else {
+            <button (click)="reactivar(ed.idEdificio)" class="btn btn-exito btn--sm">Reactivar</button>
+            }
+          </td>
+        </tr>
+        }
+        @if (edificios().length === 0) {
+        <tr>
+          <td colspan="4" class="tabla__vacio">
+            No hay edificios registrados aún.
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+</div>

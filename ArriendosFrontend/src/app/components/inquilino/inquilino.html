@@ -1,0 +1,84 @@
+<div class="contenedor">
+  <h2 class="titulo">Inquilinos</h2>
+
+  @if (errorMensaje()) {
+  <div class="alerta-error">
+    {{ errorMensaje() }}
+  </div>
+  }
+
+  <form class="formulario" [formGroup]="formInquilino" (ngSubmit)="guardar()">
+    <div class="campo">
+      <label>Identificación</label>
+      <input type="text" formControlName="identificacion" />
+    </div>
+    <div class="campo">
+      <label>Nombres</label>
+      <input type="text" formControlName="nombres" />
+    </div>
+    <div class="campo">
+      <label>Email</label>
+      <input type="email" formControlName="email" />
+    </div>
+    <div class="campo">
+      <label>Teléfono</label>
+      <input type="text" formControlName="telefono" />
+    </div>
+
+    <div class="acciones-form">
+      <button class="btn btn-primario" type="submit">
+        {{ idInquilinoActualizar() === null ? 'Guardar' : 'Actualizar' }}
+      </button>
+      @if (idInquilinoActualizar() !== null) {
+      <button class="btn btn-secundario" type="button" (click)="cancelarEdicion()">
+        Cancelar
+      </button>
+      }
+    </div>
+  </form>
+
+  @if (cargando()) {
+  <div class="cargando">Cargando inmuebles...</div>
+  }
+
+  <label class="check-inactivos">
+    <input type="checkbox" [checked]="mostrarInactivos()" (change)="toggleMostrarInactivos()" />
+    Mostrar inactivos
+  </label>
+
+  <div class="tabla-wrapper">
+    @if (!cargando()) {
+    <table class="tabla-inquilinos">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombres</th>
+          <th>Identificación</th>
+          <th>Correo</th>
+          <th>Número</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (inq of inquilinos(); track inq) {
+        <tr>
+          <td>{{ inq.idInquilino }}</td>
+          <td>{{ inq.nombres }}</td>
+          <td>{{ inq.identificacion }}</td>
+          <td>{{ inq.email }}</td>
+          <td>{{ inq.telefono }}</td>
+          <td class="acciones">
+            @if (inq.estado) {
+            <button class="btn btn-editar" (click)="SeleccionarEditar(inq)">Editar</button>
+            <button class="btn btn-desactivar" (click)="Desactivar(inq.idInquilino)">Desactivar</button>
+            } @else {
+            <button class="btn btn-activar" (click)="reactivar(inq.idInquilino)">Activar</button>
+            }
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+    }
+  </div>
+</div>

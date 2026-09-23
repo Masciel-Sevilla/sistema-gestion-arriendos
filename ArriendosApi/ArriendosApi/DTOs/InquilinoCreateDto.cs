@@ -23,5 +23,8 @@ namespace ArriendosApi.DTOs
         [StringLength(12, MinimumLength = 7, ErrorMessage = "El teléfono debe tener entre {2} y {1} caracteres.")]
         [Phone(ErrorMessage = "El formato del teléfono no es válido.")]
         public string? Telefono { get; set; }
+
+       
+
     }
 }

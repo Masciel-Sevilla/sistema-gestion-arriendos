@@ -2,6 +2,7 @@
 using ArriendosApi.Context;
 using Microsoft.EntityFrameworkCore;
 using ArriendosApi.Middlewares;
+using ArriendosApi.Services;
 
 namespace ArriendosApi
 {
@@ -37,6 +38,10 @@ namespace ArriendosApi
             options.UseNpgsql(builder.Configuration.GetConnectionString("CadenaConexion")));
 
             builder.Services.AddAutoMapper(typeof(ArriendosApi.Mappings.MappingProfile));
+            builder.Services.AddScoped<IEdificioService, EdificioService>();
+            builder.Services.AddScoped<IInquilinoService, InquilinoService>();
+            builder.Services.AddScoped<IInmuebleService, InmuebleService>();
+            builder.Services.AddScoped<IContratoService,ContratoService>();
 
             var app = builder.Build();
             app.UseMiddleware<ExceptionMiddleware>();
@@ -50,6 +55,7 @@ namespace ArriendosApi
             }
 
             app.UseHttpsRedirection();
+            app.UseCors("ReglasCors");
 
             app.UseAuthorization();
 

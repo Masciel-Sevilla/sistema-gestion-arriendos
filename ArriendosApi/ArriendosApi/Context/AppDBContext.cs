@@ -18,7 +18,7 @@ namespace ArriendosApi.Context
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Edificio>(entity=>
+            modelBuilder.Entity<Edificio>(entity =>
             {
                 entity.ToTable("Edificio");
                 entity.HasKey(e => e.IdEdificio);
@@ -35,7 +35,7 @@ namespace ArriendosApi.Context
             {
                 entity.ToTable("Inquilino");
                 entity.HasKey(e => e.IdInquilino);
-            }  
+            }
             );
             modelBuilder.Entity<Contrato>(entity =>
             {
@@ -48,6 +48,12 @@ namespace ArriendosApi.Context
                 entity.ToTable("CobroMensual");
                 entity.HasKey(e => e.IdCobro);
             });
+
+            modelBuilder.Entity<Inmueble>().
+                HasOne(i => i.Edificio).
+                WithMany().
+                HasForeignKey(i => i.IdEdificio).
+                OnDelete(DeleteBehavior.Restrict);
 
         }
     }
