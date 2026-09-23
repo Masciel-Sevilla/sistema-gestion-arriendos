@@ -15,8 +15,8 @@ namespace ArriendosApi.Entities
         public decimal MontoGarantia { get; set; }
         public int DiaPagoMensual { get; set; }
         public DateTime FechaInicio { get; set; }
-        public DateTime? FechaFin { get; set; } 
-        public bool EsActivo { get; set; }
+        public DateTime? FechaFin { get; set; }
+        public string Estado { get; set; } = Estados.Contrato.Vigente;
 
         public Inquilino? Inquilino { get; set; }
         public Inmueble? Inmueble { get; set; }

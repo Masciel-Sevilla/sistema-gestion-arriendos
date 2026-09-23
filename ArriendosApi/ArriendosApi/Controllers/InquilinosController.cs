@@ -1,7 +1,6 @@
-﻿using ArriendosApi.Context;
+﻿
 using ArriendosApi.DTOs;
-using ArriendosApi.Entities;
-using AutoMapper;
+using ArriendosApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,82 +10,68 @@ namespace ArriendosApi.Controllers
     [ApiController]
     public class InquilinosController : ControllerBase
     {
-        private readonly AppDBContext _context;
-        private readonly IMapper _mapper;
-
-        public InquilinosController(AppDBContext context,IMapper mapper) {
-            _context = context;
-            _mapper = mapper;
+        private readonly IInquilinoService _inquilinoService;
+        public InquilinosController(IInquilinoService inquilinoService) {
+            _inquilinoService = inquilinoService;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<InquilinoReadDto>>> GetInquilinos() {
-            var inquilino= await _context.Inquilinos.ToListAsync(); 
-            return Ok(_mapper.Map<IEnumerable<InquilinoReadDto>>(inquilino));
+        public async Task<ActionResult<IEnumerable<InquilinoReadDto>>> GetInquilinos([FromQuery] bool incluirInactivos) {
+            var inquilinos = await _inquilinoService.getInquilinos(incluirInactivos);
+            return Ok(inquilinos);
 
         }
         [HttpGet("{id}")]
         public async Task<ActionResult<InquilinoReadDto>> GetInquilinoById(int id) {
-            var res = await _context.Inquilinos.FindAsync(id);
+            var res = await _inquilinoService.GetInquilinoById(id);
             if (res == null) {
                 return NotFound("Inquilino no encontrado");
             }
-            return Ok(_mapper.Map<InquilinoReadDto>(res));
+            return Ok(res);
         }
         [HttpPost]
 
         public async Task<ActionResult<InquilinoReadDto>> PostInquilino(InquilinoCreateDto dto) {
 
-            bool existeCedula = await _context.Inquilinos.AnyAsync(i => i.Identificacion == dto.Identificacion);
-            if (existeCedula) {
-                return BadRequest("Ya existe un inquilino con esa identificación");
-            }
             
-            var inquilino = _mapper.Map<Inquilino>(dto);
+            var inquilino = await _inquilinoService.CreateInquilino(dto);
+            if (inquilino == null)
+            {
+                return BadRequest("La identificacion ya pertenece a un inquilino más");
+            }
 
-            _context.Inquilinos.Add(inquilino);
-            await _context.SaveChangesAsync();
-            var inquilinoReas = _mapper.Map<InquilinoReadDto>(inquilino);
-            return CreatedAtAction(nameof(GetInquilinoById), new { id = inquilinoReas.IdInquilino }, inquilinoReas);
-
+             return CreatedAtAction(nameof(GetInquilinoById), new { id = inquilino.IdInquilino }, inquilino);
         }
+
         [HttpPut("{id}")]
 
         public async Task<ActionResult> PutInquilino(InquilinoCreateDto inquilino, int id)
         {
-            var inquilinoDb = await _context.Inquilinos.FindAsync(id);
-            if (inquilinoDb == null) { return NotFound("ID no encontrado"); }
-
-            if (inquilinoDb.Identificacion != inquilino.Identificacion) { 
-            bool existeCedula = await _context.Inquilinos.AnyAsync(i=> i.Identificacion==inquilino.Identificacion);
-                if (existeCedula) {
-                    return BadRequest("La identificacion ya pertenece a un inquilino más");
-                }
+            try {
+                var actualizado = await _inquilinoService.UpdateInquilino(id,inquilino);
+                if (!actualizado) return NotFound("El Inquilino no existe o la identificacion se repite.");
+                return NoContent();
+            }
+            catch (InvalidOperationException ex) { 
+                return BadRequest(ex.Message);
             }
 
-            _mapper.Map(inquilino, inquilinoDb);
-            await _context.SaveChangesAsync();
-            return NoContent();
-
         }
+        
+        [HttpPatch("{id}/cambiar-estado")]
 
-        [HttpDelete("{id}")]
+        public async Task<ActionResult> CambiarEstadoInquilino(int id, bool nuevoEstado) {
+            var cambio = await _inquilinoService.CambiarEstado(id,nuevoEstado);
 
-        public async Task<ActionResult> DeleteInquilino(int id) {
-            var inquilino = _context.Inquilinos.Find(id);
-            if (inquilino == null) {
+            if (cambio == false)
+            {
                 return NotFound("Inquilino no encontrado");
 
             }
-            _context.Inquilinos.Remove(inquilino);
-            await _context.SaveChangesAsync();
-            return NoContent();
+
+            return Ok(new { mensaje = $"El inquilino ahora está {(nuevoEstado ? "Activo" : "Inactivo")}" });
         }
-
-        private bool InquilinoExists(int id) {
-            return _context.Inquilinos.Any(i=>i.IdInquilino==id);
-        }
-
-
+        
+        
     }
 }

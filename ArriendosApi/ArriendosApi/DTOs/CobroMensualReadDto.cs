@@ -18,7 +18,7 @@ namespace ArriendosApi.DTOs
         public decimal TotalPagar { get; set; }
         public decimal MontoPagado { get; set; }
         public decimal SaldoPendiente { get; set; }
-        public bool EsPagado { get; set; } = false;
+        public string Estado { get; set; } 
         public DateTime? FechaUltimoPago { get; set; }
 
     }

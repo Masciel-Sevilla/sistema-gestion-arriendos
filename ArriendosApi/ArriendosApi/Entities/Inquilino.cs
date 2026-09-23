@@ -8,6 +8,7 @@
         public string Identificacion { get; set; } = string.Empty; 
         public string? Email { get; set; }
         public string? Telefono { get; set; }
+        public bool Estado { get; set; } = true;
 
         public ICollection<Contrato> Contratos { get; set; }=new List<Contrato>();
     }

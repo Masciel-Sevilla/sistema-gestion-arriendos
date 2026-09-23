@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ArriendosApi.Exceptions;
+using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Text.Json;
 namespace ArriendosApi.Middlewares
@@ -27,8 +28,27 @@ namespace ArriendosApi.Middlewares
             }
         }
 
-        private Task HandleExceptionAsync(HttpContext context, Exception exception) { 
-        
+        private Task HandleExceptionAsync(HttpContext context, Exception exception) {
+
+            var (statusCode, title) = exception switch
+            {
+                NoEncontradoException => (HttpStatusCode.NotFound, "Recurso no encontrado"),
+                EstadoInvalidoException => (HttpStatusCode.BadRequest, "Estado inválido"),
+                ReferenciaInvalidaException => (HttpStatusCode.BadRequest, "Referencia inválida"),
+                OperacionNoPermitidaException => (HttpStatusCode.Conflict, "Operación no permitida"),
+                _ => (HttpStatusCode.InternalServerError, "Error interno del servidor")
+            };
+
+            // Solo loguea como error grave lo que NO es una excepción de negocio esperada
+            if (statusCode == HttpStatusCode.InternalServerError)
+            {
+                _logger.LogError(exception, "Ocurrio un problema no controlado: {Message}", exception.Message);
+            }
+            else
+            {
+                _logger.LogWarning("Error de negocio controlado: {Message}", exception.Message);
+            }
+
             context.Response.ContentType= "application/json";
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 

@@ -25,7 +25,7 @@ namespace ArriendosApi.Controllers
         public async Task<ActionResult<IEnumerable<CobroMensualReadDto>>> GetCobrosMensuales(
             [FromQuery] int ? mes,
             [FromQuery] int ? anio,
-            [FromQuery] bool ? esPagado,
+            [FromQuery] string ? estado,
             [FromQuery] int ? idContrato
             )
         {
@@ -38,8 +38,8 @@ namespace ArriendosApi.Controllers
             if (anio.HasValue) {
                 query = query.Where(c => c.Anio == anio.Value);
             }
-            if (esPagado.HasValue) {
-                query = query.Where(c => c.EsPagado == esPagado.Value);
+            if (!string.IsNullOrWhiteSpace(estado)) {
+                query = query.Where(c => c.Estado == estado);
             }
             if (idContrato.HasValue)
             {
@@ -69,6 +69,10 @@ namespace ArriendosApi.Controllers
         {
             var contrato = await _context.Contratos.FindAsync(dto.IdContrato);
             if (contrato == null) { return BadRequest("El contrato no existe"); }
+            if(contrato.Estado!=Estados.Contrato.Vigente)
+            {
+                return BadRequest($"No se pueden emitir cobros para un contrato con estado: {contrato.Estado}");
+            }
 
             bool existeCobro = await _context.CobrosMensuales
     .AnyAsync(c => c.IdContrato == dto.IdContrato && c.Mes == dto.Mes && c.Anio == dto.Anio);
@@ -122,8 +126,12 @@ namespace ArriendosApi.Controllers
             {
                 return NotFound("No enocntrado");
             }
-            if (cobro.EsPagado) {
+            if (cobro.Estado==Estados.Cobro.Pagado) {
                 return BadRequest("Este cobro ya se encuentra pagado en su totalidad.");
+            }
+            if (cobro.Estado == Estados.Cobro.Anulado)
+            {
+                return BadRequest("No se pueden registrar pagos en un cobro anulado.");
             }
             if (dto.MontoAbono > cobro.SaldoPendiente) {
                 return BadRequest($"el abono ({dto.MontoAbono}) no puede ser mayor al saldo pendienye {cobro.SaldoPendiente}");
@@ -136,7 +144,8 @@ namespace ArriendosApi.Controllers
             if (cobro.SaldoPendiente <= 0)
             {
                 cobro.SaldoPendiente = 0;
-                cobro.EsPagado = true;
+                cobro.Estado = Estados.Cobro.Pagado;
+                
             }        
 
             await _context.SaveChangesAsync();
@@ -151,7 +160,7 @@ namespace ArriendosApi.Controllers
             var cobro = await _context.CobrosMensuales.FindAsync(id);
             if (cobro == null) return NotFound("El cobro mensual no existe.");
 
-            _context.CobrosMensuales.Remove(cobro);
+            cobro.Estado = Estados.Cobro.Anulado;
             await _context.SaveChangesAsync();
             return NoContent();
         }
@@ -162,11 +171,15 @@ namespace ArriendosApi.Controllers
             if (cobro.SaldoPendiente <= 0)
             {
                 cobro.SaldoPendiente = 0;
-                cobro.EsPagado = true;
+                cobro.Estado = Estados.Cobro.Pagado;
+            }
+            else if (cobro.MontoPagado > 0)
+            {
+                cobro.Estado = Estados.Cobro.Parcial;
             }
             else
             {
-                cobro.EsPagado = false;
+                cobro.Estado = Estados.Cobro.Pendiente;
             }
             // Si se registró un pago, actualizamos la fecha del último pago si viene vacía
             if (cobro.MontoPagado > 0 && !cobro.FechaUltimoPago.HasValue)

@@ -1,9 +1,10 @@
-﻿using ArriendosApi.Context;
+﻿
 using ArriendosApi.DTOs;
-using AutoMapper;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ArriendosApi.Entities;
+
+using ArriendosApi.Services;
 
 namespace ArriendosApi.Controllers
 {
@@ -11,17 +12,53 @@ namespace ArriendosApi.Controllers
     [Route("api/[controller]")]
     public class ContratosController : ControllerBase
     {
-        private readonly AppDBContext _context;
-        private readonly IMapper _mapper;
+        private readonly IContratoService _contratoService;
 
-        public ContratosController(AppDBContext context, IMapper mapper)
+        public ContratosController(IContratoService contratoServicecontext)
         {
-            _context = context;
-            _mapper = mapper;
+            _contratoService = contratoServicecontext;
         }
         [HttpGet]
+
+        public async Task<ActionResult<IEnumerable<ContratoReadDto>>> getContratos([FromQuery] string Estado = null)
+        {
+            var contratos = await _contratoService.getContratos(Estado);
+            return Ok(contratos);
+        }
+        [HttpGet("{id}")]
+
+        public async Task<ActionResult<ContratoReadDto>> GetContratoById(int id)
+        {
+
+            var contrato = await _contratoService.getContratoById(id);
+            return Ok(contrato);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<ContratoReadDto>> PostContrato(ContratoCreateDto dto)
+        {
+
+            var contrato = await _contratoService.CreateContrato(dto);
+            return CreatedAtAction(nameof(GetContratoById), new { id = contrato.IdContrato }, contrato);
+        }
+
+
+        [HttpPut]
+        public async Task<IActionResult> PutContrato(int id, ContratoCreateDto dto)
+        {
+            await _contratoService.UpdateContrato(id, dto); 
+            return NoContent();
+        }
+        [HttpPatch("{id}/cambiar-estado")]
+        public async Task<IActionResult> CambiarEstado(int id, string estado)
+        {
+            await _contratoService.CambairEstado(id, estado);
+            return NoContent();
+        }
+
+        /*
         public async Task<ActionResult<IEnumerable<ContratoReadDto>>> GetContratos(
-            [FromQuery] bool ? esActivo,
+            [FromQuery] string ? estado,
             [FromQuery] int ? idInquilino,
             [FromQuery]int ? idInmueble
             )
@@ -30,8 +67,8 @@ namespace ArriendosApi.Controllers
 
             var query = _context.Contratos.Include(c => c.Inquilino).Include(c => c.Inmueble).AsNoTracking().AsQueryable();
 
-            if (esActivo.HasValue) {
-                query = query.Where(c => c.EsActivo == esActivo.Value);
+            if (!string.IsNullOrWhiteSpace(estado)) {
+                query = query.Where(c => c.Estado == estado);
             }
             if (idInquilino.HasValue)
             {
@@ -48,130 +85,27 @@ namespace ArriendosApi.Controllers
                 
             return Ok(_mapper.Map<IEnumerable<ContratoReadDto>>(Contratos));
         }
-        [HttpGet("{id}")]
-
-        public async Task<ActionResult<ContratoReadDto>> GetContratoById(int id)
-        {
-
-            var contrato = await _context.Contratos.Include(c => c.Inquilino)
-                .Include(c => c.Inmueble).ThenInclude(i => i!.Edificio).FirstOrDefaultAsync(c => c.IdContrato == id);
-
-            if (contrato == null)
-            {
-                return NotFound("no encontrado contrato");
-            }
-            return Ok(_mapper.Map<ContratoReadDto>(contrato));
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<ContratoReadDto>> PostContrato(ContratoCreateDto dto)
-        {
-
-            var inquilino = await _context.Inquilinos.AnyAsync(i => i.IdInquilino == dto.IdInquilino);
-            if (!inquilino)
-            {
-                return BadRequest("El id del inquilno no existe");
-            }
-            var inmueble = await _context.Inmuebles.FindAsync(dto.IdInmueble);
-            if (inmueble==null)
-            {
-                return BadRequest("El id del inmueble no existe");
-
-            }
-            if (inmueble.Estado)
-            {
-                return BadRequest("Eses inmueble esta ocupado");
-            }
-
-
-            var contrato = _mapper.Map<Contrato>(dto);
-            contrato.EsActivo = true;
-
-            _context.Contratos.Add(contrato);
-
-            inmueble.Estado = true;
-            await _context.SaveChangesAsync();
-
-            await _context.Entry(contrato).Reference(c => c.Inquilino).LoadAsync();
-            await _context.Entry(contrato).Reference(c => c.Inmueble).LoadAsync();
-            if (contrato.Inmueble != null)
-            {
-                await _context.Entry(contrato.Inmueble).Reference(i => i.Edificio).LoadAsync();
-            }
-
-            var contratoRead = _mapper.Map<ContratoReadDto>(contrato);
-            return CreatedAtAction(nameof(GetContratoById), new { id =contratoRead.IdContrato }, contratoRead);
-        }
-
-        [HttpPut("{id}")]
-        public async Task<ActionResult> PutContrato(int id, ContratoCreateDto dto)
-        {
-
-            var contrato = await _context.Contratos.Include(c => c.Inmueble).FirstOrDefaultAsync(c => c.IdContrato == id);
-            if (contrato == null)
-            {
-                return NotFound("Contrato no existe");
-            }
-            bool estadoAnterior = contrato.EsActivo;
-            _mapper.Map(dto, contrato);
-
-            if (contrato.Inmueble != null)
-            {
-                if (estadoAnterior && !contrato.EsActivo)
-                {
-                    contrato.Inmueble.Estado = false;
-                }
-                else if (!estadoAnterior && contrato.EsActivo)
-                {
-                    contrato.Inmueble.Estado = true;
-                }
-
-            }
-            await _context.SaveChangesAsync();
-            return NoContent();
-        }
-
-        [HttpPut("{id}/cancelar")]
-
-        public async Task<IActionResult> CancelarContrato(int id)
-        {
-            var contrato = await _context.Contratos.Include(c => c.Inmueble).FirstOrDefaultAsync(c => c.IdContrato == id);
-
-            if (contrato == null) {
-                return NotFound("no se encontro ese contrato");
-            }
-            if (!contrato.EsActivo) {
-                return BadRequest("El contrato ya se encuentra inactivo");
-            }
-            contrato.EsActivo = false;
-            contrato.FechaFin = DateTime.UtcNow;
-
-            if (contrato.Inmueble != null) {
-                contrato.Inmueble.Estado = false;
-            }
-            await _context.SaveChangesAsync();
-            return Ok(new { mensaje=$"El contrato {id} ha sido inhabilitado y el inmuble {contrato.Inmueble.IdInmueble} liberado"});
         
-        }
 
+    /*
+        [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteContrato(int id)
+    {
+        var contrato = await _context.Contratos.Include(c => c.Inmueble).FirstOrDefaultAsync(i => i.IdContrato == id);
 
-            [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteContrato(int id)
+        if (contrato == null) { return NotFound("el contrato no existe"); }
+
+        if (contrato.EsActivo && contrato.Inmueble != null)
         {
-            var contrato = await _context.Contratos.Include(c => c.Inmueble).FirstOrDefaultAsync(i => i.IdContrato == id);
-
-            if (contrato == null) { return NotFound("el contrato no existe"); }
-
-            if (contrato.EsActivo && contrato.Inmueble != null)
-            {
-                contrato.Inmueble.Estado = false;
-            }
-            _context.Contratos.Remove(contrato);
-            await _context.SaveChangesAsync();
-            return NoContent();
-
-
-
+            contrato.Inmueble.Estado = false;
         }
+        _context.Contratos.Remove(contrato);
+        await _context.SaveChangesAsync();
+        return NoContent();
+
+
+        
+    }
+}*/
     }
 }

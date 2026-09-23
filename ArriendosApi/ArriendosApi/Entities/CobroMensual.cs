@@ -17,7 +17,7 @@ namespace ArriendosApi.Entities
         public decimal TotalPagar { get; set; }
         public decimal MontoPagado { get; set; }
         public decimal SaldoPendiente { get; set; }
-        public bool EsPagado { get; set; } = false;
+        public string Estado { get; set; } =Estados.Cobro.Pendiente;
         public DateTime? FechaUltimoPago { get; set; }
 
         public Contrato? Contrato { get; set; }

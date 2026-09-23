@@ -1,9 +1,10 @@
-﻿using ArriendosApi.Context;
+﻿
 using ArriendosApi.DTOs;
-using ArriendosApi.Entities;
-using AutoMapper;
+
+using ArriendosApi.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+
 using System;
 
 namespace ArriendosApi.Controllers
@@ -12,79 +13,58 @@ namespace ArriendosApi.Controllers
     [ApiController]
     public class EdificiosController : ControllerBase
     {
-        private readonly AppDBContext _context;
-        private readonly IMapper _mapper;
+        private readonly IEdificioService _edificioService;
 
-        public EdificiosController(AppDBContext context,IMapper mapper)
+        public EdificiosController(IEdificioService service)
         {
-            _context = context;
-            _mapper = mapper;
+            _edificioService = service;
         }
 
         // GET: api/Edificios (Obtener todos los edificios)
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<EdificioReadDto>>> GetEdificios()
-        {   var edificios= await _context.Edificios.ToListAsync();
-            return Ok(_mapper.Map<IEnumerable<EdificioReadDto>>(edificios));
+        public async Task<ActionResult<IEnumerable<EdificioReadDto>>> GetEdificios([FromQuery] bool incluirInactivos=false)
+        {
+            var edificios = await _edificioService.GetEdificios(incluirInactivos);
+            return Ok(edificios);
         }
         [HttpPost]
         public async Task<ActionResult<EdificioReadDto>> PostEdificio(EdificioCreateDto dto) {
 
-            var edificio = _mapper.Map<Edificio>(dto);
-            _context.Edificios.Add(edificio);
-            await _context.SaveChangesAsync();
-
-            var edificioRead = _mapper.Map<EdificioReadDto>(edificio);
-            return CreatedAtAction(nameof(GetEdificios), new { id = edificioRead.IdEdificio }, edificioRead);
+            var nuevoEdificio =await _edificioService.CreateEdificioAsync(dto);
+            return CreatedAtAction(nameof(GetEdificiosById), new { id = nuevoEdificio.IdEdificio }, nuevoEdificio);
 
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<EdificioReadDto>> GetEdificiosById(int id) {
-            
-            var edificio= await _context.Edificios.FindAsync(id);
-            if (edificio == null) { 
-                return NotFound("EL EDIFICIO CON ESE ID NO FUE ENCONTRADO");
-            }
-            return Ok(_mapper.Map<EdificioReadDto>(edificio));
+
+            var edificio = await _edificioService.GetEdificiosByIdAsync(id);
+            if (edificio == null) return NotFound("El edificio no existe.");
+            return Ok(edificio);
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult> PutEdificio(int id, EdificioCreateDto dto) {
-
-            var edificioDb = await _context.Edificios.FindAsync(id);
-            if (edificioDb == null)
+            try
             {
-                return NotFound("El edificio no existe.");
+                var actualizado = await _edificioService.UpdateEdificioAsync(id, dto);
+                if (!actualizado) return NotFound("El edificio no existe.");
+                return NoContent();
             }
-
-            // Actualiza las propiedades de la entidad DB con los datos del DTO
-            _mapper.Map(dto, edificioDb);
-
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        [HttpDelete("{id}")]
-
-        public async Task<IActionResult> DeleteEdificio(int id) { 
-        
-            var edificio= await _context.Edificios.FindAsync(id);
-            if (edificio == null)
-            {
-                return NotFound("EDIFICIO NO ENCONTRADO");
+            catch (InvalidOperationException ex) {
+                return BadRequest(ex.Message);
             }
-            _context.Edificios.Remove(edificio);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            
         }
 
-        private bool EdificioExists(int id) {
-            return _context.Edificios.Any(e => e.IdEdificio == id);
+        [HttpPatch("{id}/cambiar-estado")]
+
+        public async Task<IActionResult> CambiarEstado(int id, [FromBody] bool nuevoEstado) {
+            var cambio = await _edificioService.CambiarEstadoAsync(id, nuevoEstado);
+            if (!cambio) return NotFound("El edificio no existe.");
+            return Ok(new { mensaje = $"El edificio ahora está {(nuevoEstado ? "Activo" : "Inactivo")}" });
         }
 
-
-
+       
     }
 }
